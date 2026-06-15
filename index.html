@@ -162,6 +162,20 @@ body{
 .pollen{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .pollen span{font-size:11px;padding:5px 11px;border-radius:999px;background:var(--surface-2);color:var(--ink-soft)}
 
+/* ===== Polluants ===== */
+.poll-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:1px;margin-top:22px;background:var(--line);border-radius:14px;overflow:hidden}
+.poll{background:var(--surface);padding:13px 14px}
+.poll-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px}
+.poll-name{font-size:12px;font-weight:600;color:var(--ink)}
+.poll-full{font-size:9.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em}
+.poll-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.poll-val{font-size:18px;font-weight:300}
+.poll-val small{font-size:11px;color:var(--ink-soft);font-weight:400}
+.poll-val.na{color:var(--ink-faint);font-size:15px}
+.poll-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;font-size:11px;color:var(--ink-soft)}
+.poll-legend span{display:inline-flex;align-items:center;gap:5px}
+.poll-legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+
 /* ===== UV banner ===== */
 .uv-banner{display:none;align-items:center;gap:10px;margin-bottom:14px;font-size:13px}
 .uv-banner.show{display:flex}
@@ -371,6 +385,8 @@ footer a{color:var(--ink-faint)}
             <div class="pollen" id="pollen"></div>
           </div>
         </div>
+        <div class="poll-grid" id="pollutants"></div>
+        <div class="poll-legend" id="pollLegend"></div>
       </div>
 
       <div class="panel">
@@ -508,8 +524,9 @@ async function load(place){
       `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,`+
       `uv_index_max,sunrise,sunset,wind_speed_10m_max&forecast_days=7`;
     const aqUrl=`https://air-quality-api.open-meteo.com/v1/air-quality?${fp}`+
-      `&current=european_aqi,pm2_5,pm10,ozone,nitrogen_dioxide`+
-      `&hourly=alder_pollen,birch_pollen,grass_pollen,ragweed_pollen&forecast_days=1`;
+      `&current=european_aqi`+
+      `&hourly=pm2_5,pm10,carbon_monoxide,carbon_dioxide,nitrogen_dioxide,sulphur_dioxide,ozone,`+
+      `dust,ammonia,methane,nitrogen_monoxide,alder_pollen,birch_pollen,grass_pollen,ragweed_pollen&forecast_days=1`;
     const [fc,aq]=await Promise.all([
       fetch(fcUrl).then(r=>r.json()),
       fetch(aqUrl).then(r=>r.json()).catch(()=>null)
@@ -796,25 +813,90 @@ const AQI_LEVELS=[
   [100,"#ff6b6b","Très mauvais","Évitez les activités extérieures intenses."],
   [Infinity,"#a855f7","Extrême","Air très pollué — restez à l'intérieur si possible."]
 ];
+// Couleurs / noms des 6 bandes EU AQI
+const AQI_COLORS=["#5ee6a8","#a8e05f","#ffb454","#ff8c42","#ff6b6b","#a855f7"];
+const AQI_BANDS=["Bon","Correct","Modéré","Mauvais","Très mauvais","Extrême"];
+// Seuils des sous-indices EU AQI (µg/m³) — seuls ces 5 polluants entrent dans l'indice
+const EU_SUB={
+  pm2_5:[10,20,25,50,75], pm10:[20,40,50,100,150],
+  nitrogen_dioxide:[40,90,120,230,340], ozone:[50,100,130,240,380],
+  sulphur_dioxide:[100,200,350,500,750]
+};
+function pollutantBand(key,v){
+  const th=EU_SUB[key]; if(!th||v==null)return -1;
+  let b=0; for(const t of th){ if(v>t)b++; else break; } return b; // 0..5
+}
+// [code court, clé Open-Meteo, nom complet]
+const POLLUTANTS=[
+  ["PM2.5","pm2_5","Particules fines"],
+  ["PM10","pm10","Particules"],
+  ["O₃","ozone","Ozone"],
+  ["NO₂","nitrogen_dioxide","Dioxyde d'azote"],
+  ["SO₂","sulphur_dioxide","Dioxyde de soufre"],
+  ["CO","carbon_monoxide","Monoxyde de carbone"],
+  ["NO","nitrogen_monoxide","Monoxyde d'azote"],
+  ["NH₃","ammonia","Ammoniac"],
+  ["CO₂","carbon_dioxide","Dioxyde de carbone"],
+  ["CH₄","methane","Méthane"],
+  ["Poussières","dust","Aérosols désertiques"]
+];
+function aqCurrentIdx(times){
+  const now=new Date();
+  const i=times.findIndex(t=>new Date(t)>=new Date(now.getFullYear(),now.getMonth(),now.getDate(),now.getHours()));
+  return i<0?times.length-1:i;
+}
+function fmtPollVal(v){
+  if(v==null||isNaN(v))return null;
+  if(v>=100)return Math.round(v);
+  if(v>=10)return v.toFixed(0);
+  return v.toFixed(1);
+}
 function buildAir(aq){
-  if(!aq||!aq.current){$("aqiN").textContent="–";$("aqiLvl").textContent="Indisponible";$("aqiDesc").textContent="";$("pollen").innerHTML="";$("aqiBadge").style.background="var(--surface-2)";return}
-  const v=aq.current.european_aqi;
-  const lvl=AQI_LEVELS.find(l=>v<=l[0]);
-  $("aqiN").textContent=Math.round(v);
-  $("aqiLvl").textContent=lvl[2];
-  $("aqiDesc").textContent=lvl[3];
-  $("aqiBadge").style.background=`radial-gradient(circle at 30% 30%, ${lvl[1]}, ${lvl[1]}22)`;
-  $("aqiBadge").style.boxShadow=`0 0 30px ${lvl[1]}40`;
-  // pollen (max sur la journée)
-  const P=[["Bouleau","birch_pollen"],["Graminées","grass_pollen"],["Aulne","alder_pollen"],["Ambroisie","ragweed_pollen"]];
+  const badgeOK = aq && aq.current && aq.current.european_aqi!=null;
+  if(badgeOK){
+    const v=aq.current.european_aqi;
+    const lvl=AQI_LEVELS.find(l=>v<=l[0]);
+    $("aqiN").textContent=Math.round(v);
+    $("aqiLvl").textContent=lvl[2];
+    $("aqiDesc").textContent=lvl[3];
+    $("aqiBadge").style.background=`radial-gradient(circle at 30% 30%, ${lvl[1]}, ${lvl[1]}22)`;
+    $("aqiBadge").style.boxShadow=`0 0 30px ${lvl[1]}40`;
+  }else{
+    $("aqiN").textContent="–";$("aqiLvl").textContent="Indisponible";$("aqiDesc").textContent="";
+    $("aqiBadge").style.background="var(--surface-2)";$("aqiBadge").style.boxShadow="none";
+  }
+
+  // Pollen (max sur la journée)
+  const PL=[["Bouleau","birch_pollen"],["Graminées","grass_pollen"],["Aulne","alder_pollen"],["Ambroisie","ragweed_pollen"]];
   const pel=$("pollen");pel.innerHTML="";
-  P.forEach(([n,k])=>{
-    const arr=aq.hourly?.[k];if(!arr)return;
+  PL.forEach(([n,k])=>{
+    const arr=aq&&aq.hourly?aq.hourly[k]:null;if(!arr)return;
     const mx=Math.max(...arr.filter(x=>x!=null));
     if(!isFinite(mx))return;
     const lab=mx<10?"faible":mx<50?"modéré":"élevé";
     pel.innerHTML+=`<span>${n}: ${lab}</span>`;
   });
+
+  // Grille des polluants (valeur à l'heure courante)
+  const pg=$("pollutants"), leg=$("pollLegend");
+  if(aq&&aq.hourly&&aq.hourly.time){
+    const units=aq.hourly_units||{};
+    const idx=aqCurrentIdx(aq.hourly.time);
+    pg.innerHTML=POLLUTANTS.map(([name,key,full])=>{
+      const arr=aq.hourly[key];
+      const val=arr?arr[idx]:null;
+      const disp=fmtPollVal(val);
+      const unit=units[key]||"";
+      const band=pollutantBand(key,val);
+      const dot=band>=0?`<span class="poll-dot" style="background:${AQI_COLORS[band]}" title="${AQI_BANDS[band]}"></span>`:"";
+      const valHtml=disp==null?`<div class="poll-val na">—</div>`
+        :`<div class="poll-val">${disp} <small>${unit}</small></div>`;
+      return `<div class="poll"><div class="poll-top"><span class="poll-name">${name}</span>${dot}</div>`+
+             `<div class="poll-full">${full}</div>${valHtml}</div>`;
+    }).join("");
+    leg.innerHTML=`<span style="color:var(--ink-faint)">Pastille = niveau EU du polluant :</span>`+
+      AQI_BANDS.map((n,i)=>`<span><i style="background:${AQI_COLORS[i]}"></i>${n}</span>`).join("");
+  }else{pg.innerHTML="";leg.innerHTML="";}
 }
 
 /* ============================================================
