@@ -112,7 +112,7 @@ body{
 
 /* ===== 7-day strip ===== */
 .days-strip{display:flex;justify-content:space-between;gap:6px;margin:44px 0 8px;overflow-x:auto;padding-bottom:8px}
-.dstrip{flex:1;min-width:74px;text-align:center;padding:14px 4px;border-radius:18px;cursor:default;transition:background .15s}
+.dstrip{flex:1;min-width:74px;text-align:center;padding:14px 4px;border-radius:18px;cursor:pointer;transition:background .15s}
 .dstrip:hover{background:var(--surface-2)}
 .dstrip.today{background:var(--surface-2)}
 .dstrip .di{font-size:34px;line-height:1;margin:6px 0}
@@ -161,6 +161,56 @@ body{
 .aqi-info .desc{font-size:13px;color:var(--ink-soft)}
 .pollen{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .pollen span{font-size:11px;padding:5px 11px;border-radius:999px;background:var(--surface-2);color:var(--ink-soft)}
+
+/* ===== UV banner ===== */
+.uv-banner{display:none;align-items:center;gap:10px;margin-bottom:14px;font-size:13px}
+.uv-banner.show{display:flex}
+.uv-banner .pill{padding:4px 12px;border-radius:999px;font-weight:600;color:#1a1a1a;font-size:12px}
+.uv-banner .txt{color:var(--ink-soft)}
+
+/* ===== Soleil & Lune ===== */
+.sun-card{margin-bottom:30px}
+.daylight-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.dl-set{font-size:30px;font-weight:300;letter-spacing:-.02em}
+.dl-sub{font-size:13px;color:var(--ink-soft);margin-top:2px}
+.arc-host{position:relative;width:100%;margin:6px 0 4px}
+#dayArc{width:100%;height:auto;display:block}
+.sun-times{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:0;border-top:1px solid var(--line);margin-top:8px}
+.sun-times .st{padding:13px 6px;text-align:center;border-right:1px solid var(--line-soft)}
+.sun-times .st:last-child{border-right:none}
+.sun-times .st .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);margin-bottom:4px}
+.sun-times .st .v{font-size:15px;font-weight:500}
+
+.moon-card{border-top:1px solid var(--line);padding-top:24px}
+.moon-now{display:flex;align-items:center;gap:20px;margin-bottom:22px}
+.moon-vis{width:84px;height:84px;flex-shrink:0}
+.moon-vis svg{display:block;width:100%;height:100%;filter:drop-shadow(0 0 14px rgba(180,190,210,.25))}
+.moon-name{font-size:20px;font-weight:500}
+.moon-stats{display:flex;gap:18px;margin-top:8px;flex-wrap:wrap}
+.moon-stats div{font-size:12px;color:var(--ink-soft)}
+.moon-stats div b{display:block;font-size:14px;color:var(--ink);font-weight:500;margin-top:1px}
+.moon-cal-head{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:12px;font-size:14px;font-weight:500}
+.moon-nav{background:none;border:none;color:var(--ink-soft);font-size:22px;cursor:pointer;line-height:1;padding:0 6px;border-radius:8px}
+.moon-nav:hover{color:var(--ink);background:var(--surface-2)}
+.moon-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.moon-cal .mh{text-align:center;font-size:10px;color:var(--ink-faint);text-transform:uppercase;padding-bottom:4px}
+.moon-cal .mc{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;gap:1px}
+.moon-cal .mc.today{background:var(--surface-2)}
+.moon-cal .mc .d{font-size:10px;color:var(--ink-soft)}
+.moon-cal .mc .mi{font-size:17px;line-height:1}
+.moon-cal .mc.empty{visibility:hidden}
+
+/* ===== Moyennes ===== */
+.avg-loading{padding:30px;text-align:center;color:var(--ink-faint);font-size:13px}
+.avg-delta{font-size:26px;font-weight:300;letter-spacing:-.02em;margin-bottom:2px}
+.avg-delta small{font-size:14px;color:var(--ink-soft);font-weight:400}
+.avg-sub{font-size:13px;color:var(--ink-soft);margin-bottom:16px}
+.avg-host{position:relative;height:240px;margin-bottom:8px}
+.avg-legend{display:flex;gap:18px;flex-wrap:wrap;margin:6px 0 16px;font-size:12px;color:var(--ink-soft)}
+.avg-legend span{display:inline-flex;align-items:center;gap:7px}
+.avg-legend i{width:16px;height:3px;border-radius:2px;display:inline-block}
+.avg-summary{font-size:13.5px;color:var(--ink-soft);line-height:1.55;background:var(--surface-2);padding:14px 16px;border-radius:14px}
+.avg-summary:empty{display:none}
 
 /* Map */
 #map{height:320px;border-radius:20px;overflow:hidden;border:1px solid var(--line)}
@@ -254,13 +304,61 @@ footer a{color:var(--ink-faint)}
       </div>
 
       <div class="panel">
-        <div class="sec-title">Aujourd'hui · heure par heure</div>
+        <div class="sec-title" id="hourTitle">Aujourd'hui · heure par heure</div>
         <div class="chart-tabs" id="chartTabs">
           <button data-k="temp" class="active">Température</button>
           <button data-k="precip">Précipitations</button>
           <button data-k="wind">Vent</button>
+          <button data-k="humidity">Humidité</button>
+          <button data-k="uv">UV</button>
+          <button data-k="visibility">Visibilité</button>
+          <button data-k="pressure">Pression</button>
         </div>
+        <div class="uv-banner" id="uvBanner"></div>
         <div class="chart-host"><canvas id="chart"></canvas></div>
+      </div>
+
+      <!-- SOLEIL & LUNE -->
+      <div class="panel">
+        <div class="sec-title">Soleil &amp; Lune</div>
+        <div class="sun-card">
+          <div class="daylight-head">
+            <div>
+              <div class="dl-set" id="sunsetBig">—</div>
+              <div class="dl-sub" id="daylightRemain"></div>
+            </div>
+          </div>
+          <div class="arc-host"><svg id="dayArc" viewBox="0 0 600 240"></svg></div>
+          <div class="sun-times" id="sunTimes"></div>
+        </div>
+
+        <div class="moon-card">
+          <div class="moon-now">
+            <div class="moon-vis" id="moonVis"></div>
+            <div class="moon-meta">
+              <div class="moon-name" id="moonName">—</div>
+              <div class="moon-stats" id="moonStats"></div>
+            </div>
+          </div>
+          <div class="moon-cal-head">
+            <button id="moonPrev" class="moon-nav" title="Mois précédent">‹</button>
+            <span id="moonCalTitle">—</span>
+            <button id="moonNext" class="moon-nav" title="Mois suivant">›</button>
+          </div>
+          <div class="moon-cal" id="moonCal"></div>
+        </div>
+      </div>
+
+      <!-- MOYENNES -->
+      <div class="panel">
+        <div class="sec-title">Moyennes</div>
+        <div class="chart-tabs" id="avgTabs">
+          <button data-k="temp" class="active">Température</button>
+          <button data-k="precip">Précipitations</button>
+        </div>
+        <div id="avgBody"><div class="avg-loading" id="avgLoading">Calcul des moyennes sur 5 ans…</div></div>
+        <div class="avg-host" style="display:none" id="avgHostWrap"><canvas id="avgChart"></canvas></div>
+        <div class="avg-summary" id="avgSummary"></div>
       </div>
 
       <div class="panel">
@@ -291,6 +389,7 @@ footer a{color:var(--ink-faint)}
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
 <script>
 "use strict";
 
@@ -316,7 +415,7 @@ function skyClass(code,isDay){
 }
 
 /* ---------- State ---------- */
-let CHART=null, MAP=null, MARKER=null, HOURLY=null, CURRENT=null, ACTIVE_TAB="temp";
+let CHART=null, MAP=null, MARKER=null, HOURLY=null, CURRENT=null, ACTIVE_TAB="temp", SELECTED_DAY=0, CURRENT_WIND=null;
 const $=id=>document.getElementById(id);
 
 /* ---------- Favorites (localStorage) ---------- */
@@ -402,9 +501,10 @@ async function load(place){
   try{
     const fp=`latitude=${place.lat}&longitude=${place.lon}&timezone=auto`;
     const fcUrl=`https://api.open-meteo.com/v1/forecast?${fp}`+
-      `&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day,`+
+      `&current=temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,weather_code,is_day,`+
       `wind_speed_10m,wind_direction_10m,surface_pressure,precipitation,visibility,uv_index`+
-      `&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code`+
+      `&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,precipitation_probability,precipitation,`+
+      `wind_speed_10m,wind_direction_10m,uv_index,visibility,surface_pressure,weather_code`+
       `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,`+
       `uv_index_max,sunrise,sunset,wind_speed_10m_max&forecast_days=7`;
     const aqUrl=`https://air-quality-api.open-meteo.com/v1/air-quality?${fp}`+
@@ -441,16 +541,22 @@ function renderAll(place,fc,aq){
   $("nowDesc").textContent=desc;
   $("nowFeels").textContent=`Ressenti ${Math.round(c.apparent_temperature)}°`;
 
-  $("mWind").innerHTML=`${Math.round(c.wind_speed_10m)}<small> km/h</small>`;
+  $("mWind").innerHTML=`${Math.round(c.wind_speed_10m)}<small> km/h ${windDir(c.wind_direction_10m)}</small>`;
   $("mHum").innerHTML=`${c.relative_humidity_2m}<small>%</small>`;
   $("mMax").innerHTML=`${Math.round(fc.daily.temperature_2m_max[0])}<small>°</small>`;
+  CURRENT_WIND={dir:c.wind_direction_10m,speed:c.wind_speed_10m};
 
+  SELECTED_DAY=0;
   syncFavBtn();
   buildAlerts(c,fc.daily);
   HOURLY=fc.hourly; LAST_FC=fc; drawChart(ACTIVE_TAB,fc);
   buildDays(fc.daily);
   buildAir(aq);
   buildMap(place);
+  buildSunMoon(place, fc);
+  // Moyennes : prefetch en tâche de fond (ville courante + favoris en différé)
+  prefetchAverages(place);
+  renderAveragesSection(place);
 }
 
 function fmtTime(iso){const d=new Date(iso);return d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
@@ -483,11 +589,39 @@ function buildAlerts(c,daily){
 }
 
 /* ---- Hourly chart ---- */
+// Chaque onglet : titre, unité, type, et 1+ séries. Wind ajoute la direction au tooltip.
 const TAB_CFG={
-  temp:{label:"Température (°C)",key:"temperature_2m",cvar:"--accent",unit:"°"},
-  precip:{label:"Précipitations (%)",key:"precipitation_probability",cvar:"--cool",unit:"%"},
-  wind:{label:"Vent (km/h)",key:"wind_speed_10m",cvar:"--good",unit:""}
+  temp:{unit:"°C",type:"line",series:[
+    {label:"Température",key:"temperature_2m",cvar:"--accent",fill:true},
+    {label:"Ressenti",key:"apparent_temperature",cvar:"--cool",fill:false,dash:[5,4]}
+  ]},
+  precip:{unit:"%",type:"bar",series:[{label:"Probabilité",key:"precipitation_probability",cvar:"--cool",fill:true}]},
+  wind:{unit:"km/h",type:"line",dirKey:"wind_direction_10m",series:[{label:"Vent",key:"wind_speed_10m",cvar:"--good",fill:true}]},
+  humidity:{unit:"%",type:"line",series:[
+    {label:"Humidité",key:"relative_humidity_2m",cvar:"--cool",fill:true},
+    {label:"Point de rosée",key:"dew_point_2m",cvar:"--good",fill:false,dash:[5,4],altUnit:"°C"}
+  ]},
+  uv:{unit:"",type:"line",uvGradient:true,series:[{label:"Indice UV",key:"uv_index",cvar:"--accent",fill:true}]},
+  visibility:{unit:"km",type:"line",series:[{label:"Visibilité",key:"visibility",cvar:"--good",fill:true,transform:v=>v/1000}]},
+  pressure:{unit:"hPa",type:"line",series:[{label:"Pression",key:"surface_pressure",cvar:"--cool",fill:true}]}
 };
+// Niveaux UV (seuils OMS)
+const UV_LEVELS=[
+  [2,"#4cc66a","Bas"],[5,"#e8b400","Modéré"],[7,"#ff8c42","Élevé"],
+  [10,"#ff5252","Très élevé"],[99,"#a855f7","Extrême"]
+];
+function uvLevel(v){return UV_LEVELS.find(l=>v<=l[0])||UV_LEVELS[UV_LEVELS.length-1];}
+// Construit un gradient le long de l'axe X selon la valeur UV (vert→rouge)
+function uvGradient(ctx,area,data){
+  const g=ctx.createLinearGradient(area.left,0,area.right,0);
+  const n=data.length;
+  if(n<2)return UV_LEVELS[0][1];
+  for(let i=0;i<n;i++){
+    const v=data[i]==null?0:data[i];
+    g.addColorStop(i/(n-1),uvLevel(v)[1]);
+  }
+  return g;
+}
 function hexToRgba(hex,a){
   hex=hex.replace("#","");
   if(hex.length===3)hex=hex.split("").map(x=>x+x).join("");
@@ -495,39 +629,123 @@ function hexToRgba(hex,a){
   return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
 }
 function cssVar(v){return getComputedStyle(document.body).getPropertyValue(v).trim();}
+function windDir(deg){
+  if(deg==null)return"";
+  const dirs=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"];
+  return dirs[Math.round(deg/22.5)%16];
+}
+// Détermine la tranche horaire à afficher selon le jour sélectionné
+function daySlice(h,daily,dayIdx,currentTime){
+  if(dayIdx<=0){ // aujourd'hui : 24h glissantes depuis l'heure actuelle
+    const now=new Date(currentTime);
+    let start=h.time.findIndex(t=>new Date(t)>=new Date(now.getFullYear(),now.getMonth(),now.getDate(),now.getHours()));
+    if(start<0)start=0;
+    return [start,start+24];
+  }
+  const dateStr=daily.time[dayIdx]; // "2026-06-18"
+  const start=h.time.findIndex(t=>t.startsWith(dateStr));
+  if(start<0)return[0,24];
+  return [start,start+24];
+}
 function drawChart(tab,fc){
   ACTIVE_TAB=tab;
   const h=HOURLY||fc.hourly;
-  const now=new Date(fc.current.time);
-  let start=h.time.findIndex(t=>new Date(t)>=new Date(now.getFullYear(),now.getMonth(),now.getDate(),now.getHours()));
-  if(start<0)start=0;
-  const slice=24;
-  const labels=h.time.slice(start,start+slice).map(t=>new Date(t).toLocaleTimeString("fr-FR",{hour:"2-digit"}).replace(":00",""));
+  const [start,end]=daySlice(h,fc.daily,SELECTED_DAY,fc.current.time);
+  // Titre de section selon le jour
+  const ht=$("hourTitle");
+  if(ht){
+    if(SELECTED_DAY<=0){ht.textContent="Aujourd'hui · heure par heure";}
+    else{
+      const d=new Date(fc.daily.time[SELECTED_DAY]);
+      const nom=d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+      ht.textContent=nom.charAt(0).toUpperCase()+nom.slice(1)+" · heure par heure";
+    }
+  }
+  const labels=h.time.slice(start,end).map(t=>new Date(t).toLocaleTimeString("fr-FR",{hour:"2-digit"}).replace(":00",""));
   const cfg=TAB_CFG[tab];
-  const color=cssVar(cfg.cvar)||"#e8b400";
-  const fill=hexToRgba(color,.14);
   const inkSoft=cssVar("--ink-soft")||"#6b6b6b";
   const gridC=hexToRgba(cssVar("--ink")||"#1a1a1a",.06);
   const surf=cssVar("--surface")||"#fff";
-  const data=h[cfg.key].slice(start,start+slice).map(v=>v??0);
   const ctx=$("chart").getContext("2d");
-  const grad=ctx.createLinearGradient(0,0,0,230);
-  grad.addColorStop(0,fill);grad.addColorStop(1,hexToRgba(color,0));
+
+  // Bandeau UV (niveau du moment affiché)
+  const uvb=$("uvBanner");
+  if(tab==="uv"){
+    const vals=h.uv_index.slice(start,end).map(v=>v??0);
+    const mx=Math.max(...vals,0);
+    const lv=uvLevel(mx);
+    uvb.innerHTML=`<span class="pill" style="background:${lv[1]}">${lv[2]}</span>`+
+      `<span class="txt">Pic UV de la journée : ${Math.round(mx)} (${lv[2].toLowerCase()})</span>`;
+    uvb.classList.add("show");
+  }else{uvb.classList.remove("show");uvb.innerHTML="";}
+
+  // Direction du vent pour la tranche (tooltip)
+  const dirArr=cfg.dirKey ? h[cfg.dirKey].slice(start,end) : null;
+  let hasSecondAxis=false;
+
+  const datasets=cfg.series.map((s,si)=>{
+    const color=cssVar(s.cvar)||"#e8b400";
+    let data=h[s.key].slice(start,end).map(v=>v==null?null:v);
+    if(s.transform)data=data.map(v=>v==null?null:s.transform(v));
+    const onAxis2=!!s.altUnit;
+    if(onAxis2)hasSecondAxis=true;
+
+    // Couleur de trait : gradient UV (vert→rouge) ou couleur fixe
+    let borderColor=color;
+    if(cfg.uvGradient){
+      borderColor=(c)=>{const ca=c.chart.chartArea;if(!ca)return color;return uvGradient(c.chart.ctx,ca,data);};
+    }
+    // Remplissage
+    let bg;
+    if(cfg.type==="bar"){bg=hexToRgba(color,.5);}
+    else if(s.fill){const g=ctx.createLinearGradient(0,0,0,230);g.addColorStop(0,hexToRgba(color,.16));g.addColorStop(1,hexToRgba(color,0));bg=g;}
+    else bg="transparent";
+    return {
+      label:s.label,data,borderColor,backgroundColor:bg,
+      yAxisID:onAxis2?"y1":"y",
+      _unit:s.altUnit||cfg.unit,
+      borderWidth:2.5,fill:!!s.fill,tension:.4,pointRadius:0,pointHoverRadius:5,
+      pointHoverBackgroundColor:color,borderRadius:cfg.type==="bar"?6:0,
+      borderDash:s.dash||[]
+    };
+  });
+
+  const scales={
+    x:{grid:{display:false},ticks:{color:inkSoft,font:{family:"Inter",size:11},maxRotation:0,autoSkip:true,maxTicksLimit:8}},
+    y:{grid:{color:gridC},
+       ticks:{color:inkSoft,font:{family:"Inter",size:11},
+         callback:v=>cfg.unit?`${v} ${cfg.unit}`:`${v}`},
+       beginAtZero:tab!=="temp"&&tab!=="pressure"}
+  };
+  if(hasSecondAxis){
+    const a2=cfg.series.find(s=>s.altUnit);
+    scales.y1={position:"right",grid:{drawOnChartArea:false},
+      ticks:{color:inkSoft,font:{family:"Inter",size:11},callback:v=>`${v} ${a2.altUnit}`}};
+  }
+
   if(CHART)CHART.destroy();
   CHART=new Chart(ctx,{
-    type:tab==="precip"?"bar":"line",
-    data:{labels,datasets:[{label:cfg.label,data,borderColor:color,backgroundColor:tab==="precip"?fill:grad,
-      borderWidth:2.5,fill:true,tension:.4,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:color,
-      borderRadius:tab==="precip"?6:0}]},
+    type:cfg.type,
+    data:{labels,datasets},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{
-        backgroundColor:surf,borderColor:color,borderWidth:1,padding:10,
-        titleColor:cssVar("--ink"),bodyColor:inkSoft,displayColors:false,
-        callbacks:{label:i=>`${Math.round(i.parsed.y)}${cfg.unit} ${cfg.label.split(" (")[0]}`}}},
-      scales:{
-        x:{grid:{display:false},ticks:{color:inkSoft,font:{family:"Inter",size:11},maxRotation:0,autoSkip:true,maxTicksLimit:8}},
-        y:{grid:{color:gridC},ticks:{color:inkSoft,font:{family:"Inter",size:11}},
-           beginAtZero:tab!=="temp"}}}
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{display:cfg.series.length>1,position:"top",align:"end",
+          labels:{color:inkSoft,font:{family:"Inter",size:12},boxWidth:14,boxHeight:3,usePointStyle:false,padding:14}},
+        tooltip:{
+          backgroundColor:surf,borderColor:cssVar(cfg.series[0].cvar),borderWidth:1,padding:10,
+          titleColor:cssVar("--ink"),bodyColor:inkSoft,displayColors:cfg.series.length>1,
+          callbacks:{
+            label:i=>{
+              const u=i.dataset._unit?` ${i.dataset._unit}`:"";
+              let txt=`${i.dataset.label} : ${Math.round(i.parsed.y)}${u}`;
+              if(cfg.dirKey&&dirArr){const wd=windDir(dirArr[i.dataIndex]);if(wd)txt+=` · ${wd}`;}
+              return txt;
+            }
+          }
+        }
+      },
+      scales}
   });
 }
 let LAST_FC=null;
@@ -545,14 +763,27 @@ function buildDays(d){
     const name=i===0?"Auj.":dt.toLocaleDateString("fr-FR",{weekday:"short"}).replace(".","");
     const [ds,ic]=wmo(d.weather_code[i]);
     const pr=d.precipitation_probability_max[i]??0;
-    const cell=document.createElement("div");cell.className="dstrip"+(i===0?" today":"");
-    cell.title=ds;
+    const cell=document.createElement("div");
+    cell.className="dstrip"+(i===SELECTED_DAY?" today":"");
+    cell.title=ds+" — cliquer pour voir les heures";
+    cell.dataset.idx=i;
     cell.innerHTML=
       `<div class="dd">${name.charAt(0).toUpperCase()+name.slice(1)}</div>`+
       `<div class="di">${ic}</div>`+
       `<div class="dr">${pr>5?pr+"%":""}</div>`+
       `<div class="dt">${Math.round(d.temperature_2m_max[i])}° <span class="lo">${Math.round(d.temperature_2m_min[i])}°</span></div>`;
+    cell.addEventListener("click",()=>selectDay(i));
     el.appendChild(cell);
+  }
+}
+function selectDay(i){
+  SELECTED_DAY=i;
+  [...$("days").children].forEach(c=>c.classList.toggle("today",+c.dataset.idx===i));
+  if(LAST_FC)drawChart(ACTIVE_TAB,LAST_FC);
+  // ouvre les détails si repliés, pour que le graphique soit visible
+  if(!$("details").classList.contains("open")){
+    $("details").classList.add("open");$("chevron").classList.add("open");
+    if(MAP)setTimeout(()=>MAP.invalidateSize(),150);
   }
 }
 
@@ -586,7 +817,362 @@ function buildAir(aq){
   });
 }
 
+/* ============================================================
+   SOLEIL & LUNE  (SunCalc, calcul local sans réseau)
+   ============================================================ */
+let MOON_CAL=null; // {year, month}
+function fmtLocal(date, offsetSec){
+  if(!date || isNaN(date.getTime())) return "—";
+  const d=new Date(date.getTime()+offsetSec*1000);
+  return String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0");
+}
+function durHM(ms){
+  if(ms<0)ms=0;
+  const m=Math.round(ms/60000);
+  return `${Math.floor(m/60)}h ${String(m%60).padStart(2,"0")}min`;
+}
+function moonName(phase){
+  if(phase<0.03||phase>0.97)return"Nouvelle lune";
+  if(phase<0.22)return"Premier croissant";
+  if(phase<0.28)return"Premier quartier";
+  if(phase<0.47)return"Lune gibbeuse croissante";
+  if(phase<0.53)return"Pleine lune";
+  if(phase<0.72)return"Lune gibbeuse décroissante";
+  if(phase<0.78)return"Dernier quartier";
+  return"Dernier croissant";
+}
+function moonEmoji(phase){
+  const e=["🌑","🌒","🌓","🌔","🌕","🌖","🌗","🌘"];
+  return e[Math.round(phase*8)%8];
+}
+// SVG réaliste de la lune selon la fraction illuminée + waxing/waning
+function moonSVG(fraction, waxing, size){
+  const r=50, rx=r*(1-2*fraction);
+  const limbSweep=waxing?1:0;
+  const termSweep=waxing?(rx>=0?1:0):(rx>=0?0:1);
+  const arx=Math.abs(rx).toFixed(2);
+  const lit=`M0 ${-r} A ${r} ${r} 0 0 ${limbSweep} 0 ${r} A ${arx} ${r} 0 0 ${termSweep} 0 ${-r} Z`;
+  return `<svg viewBox="-54 -54 108 108"><defs>
+    <radialGradient id="mg" cx="40%" cy="38%" r="65%">
+      <stop offset="0%" stop-color="#f4f3ee"/><stop offset="100%" stop-color="#c5c8d0"/>
+    </radialGradient></defs>
+    <circle r="${r}" fill="#23252c"/>
+    <path d="${lit}" fill="url(#mg)"/>
+    <circle r="${r}" fill="none" stroke="rgba(0,0,0,.15)" stroke-width="1"/></svg>`;
+}
+function buildSunMoon(place, fc){
+  if(typeof SunCalc==="undefined"){ $("sunsetBig").textContent="—"; return; }
+  const off=(fc&&typeof fc.utc_offset_seconds==="number")?fc.utc_offset_seconds:(-new Date().getTimezoneOffset()*60);
+  const lat=place.lat, lon=place.lon, nowMs=Date.now();
+  const t=SunCalc.getTimes(new Date(nowMs), lat, lon);
+  const sunrise=t.sunrise, sunset=t.sunset, firstLight=t.dawn, lastLight=t.dusk;
+
+  $("sunsetBig").textContent=fmtLocal(sunset, off);
+  // Lumière restante avant le coucher
+  const rem=sunset.getTime()-nowMs;
+  $("daylightRemain").textContent = rem>0
+    ? `Lumière du jour restante : ${durHM(rem)}`
+    : `Coucher passé · lever demain`;
+
+  // Tableau des horaires
+  const total=sunset.getTime()-sunrise.getTime();
+  $("sunTimes").innerHTML=[
+    ["Première lueur",fmtLocal(firstLight,off)],
+    ["Lever",fmtLocal(sunrise,off)],
+    ["Coucher",fmtLocal(sunset,off)],
+    ["Dernière lueur",fmtLocal(lastLight,off)],
+    ["Durée du jour",durHM(total)]
+  ].map(([l,v])=>`<div class="st"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
+
+  drawDaylightArc(place, off);
+
+  // ----- Lune -----
+  const illum=SunCalc.getMoonIllumination(new Date(nowMs));
+  const waxing=illum.phase<=0.5;
+  $("moonVis").innerHTML=moonSVG(illum.fraction, waxing, 84);
+  $("moonName").textContent=moonName(illum.phase);
+  const mt=SunCalc.getMoonTimes(new Date(nowMs), lat, lon);
+  const moonrise=mt.rise?fmtLocal(mt.rise,off):"—";
+  const moonset=mt.set?fmtLocal(mt.set,off):"—";
+  $("moonStats").innerHTML=
+    `<div>Illumination<b>${Math.round(illum.fraction*100)}%</b></div>`+
+    `<div>Lever de lune<b>${moonrise}</b></div>`+
+    `<div>Coucher de lune<b>${moonset}</b></div>`;
+
+  // Calendrier du mois courant
+  const lnow=new Date(nowMs+off*1000);
+  MOON_CAL={year:lnow.getUTCFullYear(), month:lnow.getUTCMonth()};
+  renderMoonCalendar();
+}
+function drawDaylightArc(place, off){
+  const svg=$("dayArc");
+  const W=600, H=240, horizonY=158;
+  const nowMs=Date.now();
+  const lnow=new Date(nowMs+off*1000);
+  const y=lnow.getUTCFullYear(), mo=lnow.getUTCMonth(), d=lnow.getUTCDate();
+  const midnightAbs=Date.UTC(y,mo,d,0,0,0)-off*1000; // instant du 00:00 local
+  const lat=place.lat, lon=place.lon;
+  // échantillonne l'altitude solaire sur 24h
+  const pts=[]; let maxAlt=0.2;
+  for(let h=0;h<=48;h++){
+    const inst=midnightAbs+(h/48)*24*3600*1000;
+    const alt=SunCalc.getPosition(new Date(inst),lat,lon).altitude; // radians
+    if(alt>maxAlt)maxAlt=alt;
+    pts.push([h/48*W, alt]);
+  }
+  const scale=(horizonY-22)/maxAlt;
+  const Y=alt=>Math.max(8,Math.min(H-8, horizonY-alt*scale));
+  const poly=pts.map(p=>`${p[0].toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ");
+  // position du soleil maintenant
+  const nx=((nowMs-midnightAbs)/(24*3600*1000))*W;
+  const nAlt=SunCalc.getPosition(new Date(nowMs),lat,lon).altitude;
+  const ny=Y(nAlt);
+  // repères verticaux 06/12/18
+  let grid="";
+  [6,12,18].forEach(hh=>{const gx=hh/24*W;grid+=`<line x1="${gx}" y1="6" x2="${gx}" y2="${H-22}" stroke="rgba(128,128,128,.18)" stroke-dasharray="3 5"/>`;});
+  let labels="";
+  [["00",0],["06",6],["12",12],["18",18]].forEach(([t,hh])=>{const gx=hh/24*W;labels+=`<text x="${gx+4}" y="${H-6}" fill="rgba(128,128,128,.7)" font-size="13" font-family="Inter">${t}</text>`;});
+  const dayColor=cssVar("--accent")||"#e8b400";
+  svg.innerHTML=
+    `<rect x="0" y="0" width="${W}" height="${horizonY}" fill="${hexToRgba(dayColor,.06)}"/>`+
+    `<rect x="0" y="${horizonY}" width="${W}" height="${H-horizonY}" fill="rgba(128,128,140,.07)"/>`+
+    grid+
+    `<line x1="0" y1="${horizonY}" x2="${W}" y2="${horizonY}" stroke="rgba(128,128,128,.35)"/>`+
+    `<polyline points="${poly}" fill="none" stroke="${cssVar('--ink-soft')||'#888'}" stroke-width="2.5" stroke-linejoin="round"/>`+
+    labels+
+    `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="9" fill="${dayColor}" stroke="var(--surface)" stroke-width="3"/>`;
+}
+function shiftMoonCal(delta){
+  if(!MOON_CAL)return;
+  let m=MOON_CAL.month+delta, yr=MOON_CAL.year;
+  if(m<0){m=11;yr--;} if(m>11){m=0;yr++;}
+  MOON_CAL={year:yr,month:m};
+  renderMoonCalendar();
+}
+function renderMoonCalendar(){
+  if(!MOON_CAL||typeof SunCalc==="undefined")return;
+  const {year,month}=MOON_CAL;
+  $("moonCalTitle").textContent=new Date(year,month,1)
+    .toLocaleDateString("fr-FR",{month:"long",year:"numeric"}).replace(/^./,s=>s.toUpperCase());
+  const first=new Date(year,month,1);
+  // lundi=0
+  let startDow=(first.getDay()+6)%7;
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const today=new Date(); const isCurMonth=(today.getFullYear()===year&&today.getMonth()===month);
+  let html=["L","M","M","J","V","S","D"].map(d=>`<div class="mh">${d}</div>`).join("");
+  for(let i=0;i<startDow;i++)html+=`<div class="mc empty"></div>`;
+  for(let day=1;day<=daysInMonth;day++){
+    const dt=new Date(year,month,day,12,0,0);
+    const ph=SunCalc.getMoonIllumination(dt).phase;
+    const todayCls=(isCurMonth&&today.getDate()===day)?" today":"";
+    html+=`<div class="mc${todayCls}"><span class="d">${day}</span><span class="mi">${moonEmoji(ph)}</span></div>`;
+  }
+  $("moonCal").innerHTML=html;
+}
+$("moonPrev").addEventListener("click",()=>shiftMoonCal(-1));
+$("moonNext").addEventListener("click",()=>shiftMoonCal(1));
+
+/* ============================================================
+   MOYENNES  (historique Open-Meteo Archive API, prefetch + cache)
+   ============================================================ */
+const AVG_YEARS=5;
+let AVG_CHART=null, AVG_TAB="temp", AVG_DATA=null, AVG_PLACE=null;
+const avgKey=p=>`${(+p.lat).toFixed(2)},${(+p.lon).toFixed(2)}`;
+const todayStr=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;};
+const AVG_MEM={}; // cache mémoire de session
+const AVG_INFLIGHT={}; // requêtes en cours (évite double fetch)
+
+function avgCacheGet(p){
+  const k=avgKey(p);
+  if(AVG_MEM[k]&&AVG_MEM[k].date===todayStr())return AVG_MEM[k];
+  try{
+    const raw=localStorage.getItem("atmos.avg."+k);
+    if(raw){const o=JSON.parse(raw); if(o.date===todayStr()){AVG_MEM[k]=o; return o;}}
+  }catch{}
+  return null;
+}
+function avgCacheSet(p,data){
+  const k=avgKey(p); AVG_MEM[k]=data;
+  try{localStorage.setItem("atmos.avg."+k, JSON.stringify(data));}catch{}
+}
+function isoShift(date,days){const d=new Date(date);d.setDate(d.getDate()+days);return d;}
+function isoDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+
+async function computeAverages(place){
+  const cached=avgCacheGet(place);
+  if(cached)return cached;
+  const k=avgKey(place);
+  if(AVG_INFLIGHT[k])return AVG_INFLIGHT[k];
+  AVG_INFLIGHT[k]=_computeAveragesRaw(place).finally(()=>{delete AVG_INFLIGHT[k];});
+  return AVG_INFLIGHT[k];
+}
+async function _computeAveragesRaw(place){
+  const today=new Date();
+  const lat=place.lat, lon=place.lon;
+  // Historique : pour chaque année passée, fenêtre de 30 jours finissant à la même date
+  const histCalls=[];
+  for(let i=1;i<=AVG_YEARS;i++){
+    const end=new Date(today.getFullYear()-i, today.getMonth(), today.getDate());
+    const start=isoShift(end,-29);
+    const url=`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}`+
+      `&start_date=${isoDate(start)}&end_date=${isoDate(end)}`+
+      `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+    histCalls.push(fetch(url).then(r=>r.json()).catch(()=>null));
+  }
+  // Année courante : 30 derniers jours réels
+  const curUrl=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`+
+    `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&past_days=30&forecast_days=1&timezone=auto`;
+  const curP=fetch(curUrl).then(r=>r.json()).catch(()=>null);
+
+  const [cur, ...hist]=await Promise.all([curP, ...histCalls]);
+  const valid=hist.filter(h=>h&&h.daily&&h.daily.time);
+  if(!valid.length||!cur||!cur.daily)throw new Error("Données historiques indisponibles");
+
+  // ---- Température : normale (avg high/low) centrée sur la date du jour ----
+  let sumHi=0,sumLo=0,nHi=0,nLo=0;
+  valid.forEach(h=>{
+    const tx=h.daily.temperature_2m_max, tn=h.daily.temperature_2m_min;
+    const L=tx.length;
+    for(let j=Math.max(0,L-7);j<L;j++){ // 7 derniers jours (proches de la date du jour)
+      if(tx[j]!=null){sumHi+=tx[j];nHi++;}
+      if(tn[j]!=null){sumLo+=tn[j];nLo++;}
+    }
+  });
+  const avgHigh=nHi?sumHi/nHi:null, avgLow=nLo?sumLo/nLo:null;
+
+  // ---- Précipitations : cumul moyen vs cumul réel sur 30 jours ----
+  const N=30;
+  const avgDaily=new Array(N).fill(0), cnt=new Array(N).fill(0);
+  valid.forEach(h=>{
+    const ps=h.daily.precipitation_sum, L=ps.length, offs=L-N;
+    for(let d=0;d<N;d++){const idx=offs+d; if(idx>=0&&ps[idx]!=null){avgDaily[d]+=ps[idx];cnt[d]++;}}
+  });
+  for(let d=0;d<N;d++)avgDaily[d]= cnt[d]?avgDaily[d]/cnt[d]:0;
+  let acc=0; const avgCum=avgDaily.map(v=>(acc+=v));
+  // réel année courante
+  const cps=cur.daily.precipitation_sum, ct=cur.daily.time;
+  const cL=cps.length, cOff=cL-N;
+  const actualDaily=[], labels=[];
+  for(let d=0;d<N;d++){
+    const idx=cOff+d;
+    actualDaily.push(idx>=0&&cps[idx]!=null?cps[idx]:0);
+    labels.push(idx>=0?ct[idx].slice(5):"");
+  }
+  acc=0; const actualCum=actualDaily.map(v=>(acc+=v));
+
+  const data={date:todayStr(),
+    temp:{avgHigh, avgLow, todayHigh:null},
+    precip:{labels, actualCum, avgCum, totalActual:actualCum[N-1], totalAvg:avgCum[N-1],
+            startLabel:ct[Math.max(0,cOff)]?ct[Math.max(0,cOff)].slice(5):""}
+  };
+  avgCacheSet(place,data);
+  return data;
+}
+
+let _prefetchedFavs=false;
+function prefetchAverages(place){
+  // ville courante en tâche de fond
+  computeAverages(place).then(d=>{
+    if(AVG_PLACE&&avgKey(AVG_PLACE)===avgKey(place)){AVG_DATA=d; if(isDetailsOpen())renderAvg();}
+  }).catch(()=>{});
+  // favoris en différé (une fois par session), seulement si pas déjà en cache du jour
+  if(_prefetchedFavs)return;
+  _prefetchedFavs=true;
+  const favs=getFavs().filter(f=>avgKey(f)!==avgKey(place)&&!avgCacheGet(f));
+  favs.forEach((f,i)=>{ setTimeout(()=>{computeAverages(f).catch(()=>{});}, 2500*(i+1)); });
+}
+function isDetailsOpen(){return $("details").classList.contains("open");}
+
+function renderAveragesSection(place){
+  AVG_PLACE=place;
+  AVG_DATA=avgCacheGet(place);
+  renderAvg();
+  if(!AVG_DATA){
+    computeAverages(place).then(d=>{
+      if(AVG_PLACE&&avgKey(AVG_PLACE)===avgKey(place)){AVG_DATA=d; renderAvg();}
+    }).catch(()=>{ $("avgLoading").textContent="Moyennes indisponibles pour ce lieu."; });
+  }
+}
+function renderAvg(){
+  const loading=$("avgLoading"), wrap=$("avgHostWrap"), summary=$("avgSummary");
+  if(!AVG_DATA){loading.style.display="block";wrap.style.display="none";summary.textContent="";return;}
+  loading.style.display="none"; wrap.style.display="block";
+  drawAvgChart(AVG_TAB);
+}
+function drawAvgChart(tab){
+  AVG_TAB=tab;
+  if(!AVG_DATA||!LAST_FC)return;
+  const ctx=$("avgChart").getContext("2d");
+  const inkSoft=cssVar("--ink-soft")||"#6b6b6b";
+  const gridC=hexToRgba(cssVar("--ink")||"#1a1a1a",.06);
+  const surf=cssVar("--surface")||"#fff";
+  const accent=cssVar("--accent")||"#e8b400", cool=cssVar("--cool")||"#5b8def";
+  const summary=$("avgSummary");
+  if(AVG_CHART)AVG_CHART.destroy();
+
+  if(tab==="temp"){
+    // temp horaire d'aujourd'hui (0-23h) vs bande normale [avgLow, avgHigh]
+    const h=LAST_FC.hourly;
+    const dstr=LAST_FC.daily.time[0];
+    let s=h.time.findIndex(t=>t.startsWith(dstr)); if(s<0)s=0;
+    const today=h.temperature_2m.slice(s,s+24).map(v=>v??null);
+    const labels=h.time.slice(s,s+24).map(t=>new Date(t).toLocaleTimeString("fr-FR",{hour:"2-digit"}).replace(":00",""));
+    const hi=AVG_DATA.temp.avgHigh, lo=AVG_DATA.temp.avgLow;
+    const bandHi=new Array(24).fill(hi), bandLo=new Array(24).fill(lo);
+    const todayHigh=Math.round(LAST_FC.daily.temperature_2m_max[0]);
+    const delta=Math.round(todayHigh-hi);
+    document.getElementById("avgChart");
+    AVG_CHART=new Chart(ctx,{type:"line",
+      data:{labels,datasets:[
+        {label:"Plage normale (haut)",data:bandHi,borderColor:"transparent",backgroundColor:hexToRgba(accent,.14),fill:"+1",pointRadius:0,tension:0},
+        {label:"Plage normale (bas)",data:bandLo,borderColor:"transparent",backgroundColor:"transparent",fill:false,pointRadius:0,tension:0},
+        {label:"Aujourd'hui",data:today,borderColor:accent,backgroundColor:"transparent",borderWidth:2.5,fill:false,tension:.4,pointRadius:0,pointHoverRadius:5}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+        plugins:{legend:{display:false},
+          tooltip:{backgroundColor:surf,borderColor:accent,borderWidth:1,padding:10,titleColor:cssVar("--ink"),bodyColor:inkSoft,
+            filter:i=>i.datasetIndex===2,
+            callbacks:{label:i=>`Aujourd'hui : ${Math.round(i.parsed.y)} °C`}}},
+        scales:{x:{grid:{display:false},ticks:{color:inkSoft,font:{family:"Inter",size:11},maxTicksLimit:8,maxRotation:0}},
+          y:{grid:{color:gridC},ticks:{color:inkSoft,font:{family:"Inter",size:11},callback:v=>`${v} °`}}}}
+    });
+    const dtxt=delta===0?"dans la normale":(delta>0?`+${delta}° au-dessus de la normale`:`${delta}° sous la normale`);
+    $("avgSummary").innerHTML=
+      `<div class="avg-delta">${todayHigh}° <small>aujourd'hui · ${dtxt}</small></div>`+
+      `Pour aujourd'hui, la plage de température normale est de ${Math.round(lo)}° à ${Math.round(hi)}° `+
+      `(moyenne haute ${Math.round(hi)}°), calculée sur les ${AVG_YEARS} dernières années. `+
+      `La maximale du jour est de ${todayHigh}°.`;
+  } else {
+    const P=AVG_DATA.precip;
+    AVG_CHART=new Chart(ctx,{type:"line",
+      data:{labels:P.labels,datasets:[
+        {label:"30 derniers jours",data:P.actualCum,borderColor:cool,backgroundColor:hexToRgba(cool,.12),borderWidth:2.5,fill:true,tension:.3,pointRadius:0,pointHoverRadius:5},
+        {label:"Moyenne",data:P.avgCum,borderColor:inkSoft,backgroundColor:"transparent",borderWidth:2,borderDash:[6,5],fill:false,tension:.3,pointRadius:0}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+        plugins:{legend:{display:true,position:"top",align:"end",labels:{color:inkSoft,font:{family:"Inter",size:12},boxWidth:14,boxHeight:3,padding:14}},
+          tooltip:{backgroundColor:surf,borderColor:cool,borderWidth:1,padding:10,titleColor:cssVar("--ink"),bodyColor:inkSoft,
+            callbacks:{label:i=>`${i.dataset.label} : ${Math.round(i.parsed.y)} mm`}}},
+        scales:{x:{grid:{display:false},ticks:{color:inkSoft,font:{family:"Inter",size:10},maxTicksLimit:7,maxRotation:0}},
+          y:{grid:{color:gridC},beginAtZero:true,ticks:{color:inkSoft,font:{family:"Inter",size:11},callback:v=>`${v} mm`}}}}
+    });
+    const ta=Math.round(P.totalActual), tm=Math.round(P.totalAvg), diff=ta-tm;
+    const dtxt=diff===0?"dans la normale":(diff>0?`+${diff} mm au-dessus`:`${diff} mm sous`);
+    $("avgSummary").innerHTML=
+      `<div class="avg-delta">${ta} mm <small>sur 30 jours · ${dtxt} de la moyenne</small></div>`+
+      `Historiquement, la précipitation moyenne sur cette période de 30 jours est de ${tm} mm `+
+      `(moyenne ${AVG_YEARS} ans). Le cumul des 30 derniers jours est de ${ta} mm.`;
+  }
+}
+$("avgTabs").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  [...$("avgTabs").children].forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  if(AVG_DATA)drawAvgChart(b.dataset.k);
+});
+
 /* ---- Map ---- */
+let WIND_MARKER=null;
 function buildMap(place){
   if(!MAP){
     MAP=L.map("map",{zoomControl:true,attributionControl:true}).setView([place.lat,place.lon],10);
@@ -597,10 +1183,23 @@ function buildMap(place){
     MAP.setView([place.lat,place.lon],10);
   }
   if(MARKER)MARKER.remove();
+  if(WIND_MARKER)WIND_MARKER.remove();
   const accent=getComputedStyle(document.body).getPropertyValue("--accent").trim()||"#e8b400";
   MARKER=L.circleMarker([place.lat,place.lon],{
-    radius:9,color:accent,fillColor:accent,fillOpacity:.7,weight:2
+    radius:7,color:accent,fillColor:accent,fillOpacity:.8,weight:2
   }).addTo(MAP).bindPopup(`<b>${place.name}</b>`);
+
+  // Flèche de direction du vent (option B). La direction météo = d'où vient le vent ;
+  // la flèche pointe vers où il VA (dir + 180°).
+  if(CURRENT_WIND){
+    const deg=CURRENT_WIND.dir||0, spd=Math.round(CURRENT_WIND.speed||0);
+    const heading=(deg+180)%360; // direction vers laquelle souffle le vent
+    const good=getComputedStyle(document.body).getPropertyValue("--good").trim()||"#3a9d6a";
+    const html=`<div style="transform:rotate(${heading}deg);transform-origin:center;font-size:30px;line-height:1;color:${good};text-shadow:0 1px 3px rgba(0,0,0,.4)">↑</div>`;
+    const icon=L.divIcon({html,className:"wind-arrow",iconSize:[34,34],iconAnchor:[17,17]});
+    WIND_MARKER=L.marker([place.lat,place.lon],{icon,interactive:true})
+      .addTo(MAP).bindPopup(`Vent : ${spd} km/h, ${windDir(deg)} (de ${Math.round(deg)}°)`);
+  }
   setTimeout(()=>MAP.invalidateSize(),120);
 }
 
@@ -614,6 +1213,7 @@ $("chevron").addEventListener("click",()=>{
     // (re)dessine le graph et rafraîchit la carte une fois visibles
     if(LAST_FC)drawChart(ACTIVE_TAB,LAST_FC);
     if(MAP)setTimeout(()=>MAP.invalidateSize(),150);
+    renderAvg();
   }
 });
 
@@ -627,6 +1227,8 @@ function applyTheme(t){
   // redessine ce qui dépend des couleurs
   if(LAST_FC)drawChart(ACTIVE_TAB,LAST_FC);
   if(MARKER&&CURRENT)buildMap(CURRENT);
+  if(AVG_DATA)drawAvgChart(AVG_TAB);
+  if(CURRENT&&LAST_FC&&typeof SunCalc!=="undefined")drawDaylightArc(CURRENT, LAST_FC.utc_offset_seconds||0);
 }
 $("themeToggle").addEventListener("click",()=>{
   applyTheme(document.body.dataset.theme==="dark"?"light":"dark");
