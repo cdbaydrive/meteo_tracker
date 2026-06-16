@@ -1620,7 +1620,8 @@ const RADAR={frames:[],layers:{},pos:0,timer:null,on:false,host:"",pastCount:0};
 function radarTileLayer(frame){
   if(RADAR.layers[frame.path])return RADAR.layers[frame.path];
   const url=RADAR.host+frame.path+"/256/{z}/{x}/{y}/2/1_1.png"; // color=2 (bleu), smooth=1, snow=1
-  const layer=L.tileLayer(url,{opacity:0,zIndex:6,tileSize:256});
+  // maxNativeZoom=7 : au-delà, Leaflet ré-étire la tuile z7 (RainViewer ne sert pas au-delà de z7)
+  const layer=L.tileLayer(url,{opacity:0,zIndex:6,tileSize:256,maxNativeZoom:7,maxZoom:19});
   RADAR.layers[frame.path]=layer;
   if(MAP)layer.addTo(MAP);
   return layer;
