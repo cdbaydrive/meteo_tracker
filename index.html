@@ -109,6 +109,10 @@ body{
 .metric .val{font-size:22px;font-weight:300}
 .metric .val small{font-size:13px;color:var(--ink-soft);font-weight:400}
 .metric .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-faint);margin-top:5px}
+.nowcast{display:none;margin-top:22px;padding:12px 18px;border-radius:14px;background:var(--surface-2);font-size:13.5px;color:var(--ink-soft);text-align:center}
+.nowcast.show{display:block}
+.nowcast.rain{background:rgba(91,141,239,.12);color:var(--cool)}
+.nowcast b{color:var(--ink);font-weight:600}
 
 /* ===== 7-day strip ===== */
 .days-strip{display:flex;justify-content:space-between;gap:6px;margin:44px 0 8px;overflow-x:auto;padding-bottom:8px}
@@ -184,6 +188,12 @@ body{
 
 /* ===== Soleil & Lune ===== */
 .sun-card{margin-bottom:30px}
+.sun-head{display:flex;gap:14px;margin-bottom:10px}
+.sun-item{flex:1;display:flex;align-items:center;gap:12px;background:var(--surface-2);border-radius:14px;padding:13px 16px}
+.sun-ic-wrap{flex-shrink:0;width:34px;height:30px}
+.sun-ic-wrap svg{display:block;width:100%;height:100%}
+.sun-txt .sl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint)}
+.sun-txt .sv{font-size:20px;font-weight:500;margin-top:2px}
 .daylight-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 .dl-set{font-size:30px;font-weight:300;letter-spacing:-.02em}
 .dl-sub{font-size:13px;color:var(--ink-soft);margin-top:2px}
@@ -216,7 +226,8 @@ body{
 .moon-cal-legend{display:none;align-items:center;gap:8px;margin-top:12px;font-size:12px;color:var(--ink-soft)}
 .mcl-dot{width:16px;height:3px;border-radius:2px;background:var(--accent);display:inline-block;flex-shrink:0}
 .moon-cal .mc .d{font-size:10px;color:var(--ink-soft)}
-.moon-cal .mc .mi{font-size:17px;line-height:1}
+.moon-cal .mc .mi{width:22px;height:22px;line-height:0}
+.moon-cal .mc .mi svg{display:block;width:100%;height:100%}
 .moon-cal .mc.empty{visibility:hidden}
 
 /* ===== Moyennes ===== */
@@ -232,7 +243,14 @@ body{
 .avg-summary:empty{display:none}
 
 /* Map */
+.map-wrap{position:relative}
 #map{height:320px;border-radius:20px;overflow:hidden;border:1px solid var(--line)}
+.radar-ctrl{position:absolute;top:12px;right:12px;z-index:500;display:flex;align-items:center;gap:8px}
+.radar-btn{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-size:12.5px;font-family:inherit;color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);transition:.15s}
+.radar-btn:hover{border-color:var(--accent)}
+.radar-btn.on{background:var(--cool);color:#fff;border-color:var(--cool)}
+.radar-time{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:11px;color:var(--ink-soft);display:none}
+.radar-time.show{display:inline-block}
 .leaflet-container{background:var(--surface-2)!important;font-family:inherit}
 .leaflet-tile-pane{filter:var(--map-filter)}
 
@@ -306,6 +324,7 @@ footer a{color:var(--ink-faint)}
         <div class="metric"><div class="val" id="mHum">–</div><div class="lbl">Humidité</div></div>
         <div class="metric"><div class="val" id="mMax">–</div><div class="lbl">Maximale</div></div>
       </div>
+      <div class="nowcast" id="nowcast"></div>
     </div>
 
     <!-- 7-DAY STRIP -->
@@ -332,6 +351,8 @@ footer a{color:var(--ink-faint)}
           <button data-k="uv">UV</button>
           <button data-k="visibility">Visibilité</button>
           <button data-k="pressure">Pression</button>
+          <button data-k="solar">Solaire</button>
+          <button data-k="freezing">Gel</button>
         </div>
         <div class="uv-banner" id="uvBanner"></div>
         <div class="chart-host"><canvas id="chart"></canvas></div>
@@ -341,12 +362,17 @@ footer a{color:var(--ink-faint)}
       <div class="panel">
         <div class="sec-title">Soleil &amp; Lune</div>
         <div class="sun-card">
-          <div class="daylight-head">
-            <div>
-              <div class="dl-set" id="sunsetBig">—</div>
-              <div class="dl-sub" id="daylightRemain"></div>
+          <div class="sun-head">
+            <div class="sun-item">
+              <div class="sun-ic-wrap" id="sunriseIcon"></div>
+              <div class="sun-txt"><div class="sl">Lever du soleil</div><div class="sv" id="sunriseBig">—</div></div>
+            </div>
+            <div class="sun-item">
+              <div class="sun-ic-wrap" id="sunsetIcon"></div>
+              <div class="sun-txt"><div class="sl">Coucher du soleil</div><div class="sv" id="sunsetBig">—</div></div>
             </div>
           </div>
+          <div class="dl-sub" id="daylightRemain"></div>
           <div class="arc-host"><svg id="dayArc" viewBox="0 0 600 240"></svg></div>
           <div class="sun-times" id="sunTimes"></div>
         </div>
@@ -399,7 +425,13 @@ footer a{color:var(--ink-faint)}
 
       <div class="panel">
         <div class="sec-title">Localisation</div>
-        <div id="map"></div>
+        <div class="map-wrap">
+          <div id="map"></div>
+          <div class="radar-ctrl" id="radarCtrl">
+            <button id="radarToggle" class="radar-btn">◉ Radar pluie</button>
+            <span class="radar-time" id="radarTime"></span>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -526,9 +558,12 @@ async function load(place){
     const fp=`latitude=${place.lat}&longitude=${place.lon}&timezone=auto`;
     const fcUrl=`https://api.open-meteo.com/v1/forecast?${fp}`+
       `&current=temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,weather_code,is_day,`+
-      `wind_speed_10m,wind_direction_10m,surface_pressure,precipitation,visibility,uv_index`+
+      `wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure,pressure_msl,precipitation,visibility,uv_index,`+
+      `cape,freezing_level_height,shortwave_radiation`+
+      `&minutely_15=precipitation&forecast_minutely_15=12`+
       `&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,precipitation_probability,precipitation,`+
-      `wind_speed_10m,wind_direction_10m,uv_index,visibility,surface_pressure,weather_code`+
+      `wind_speed_10m,wind_gusts_10m,wind_direction_10m,uv_index,visibility,surface_pressure,weather_code,`+
+      `cape,freezing_level_height,shortwave_radiation`+
       `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,`+
       `uv_index_max,sunrise,sunset,wind_speed_10m_max&forecast_days=7&past_days=1`;
     const aqUrl=`https://air-quality-api.open-meteo.com/v1/air-quality?${fp}`+
@@ -582,6 +617,7 @@ function renderAll(place,fc,aq){
   SELECTED_DAY=DAY0;
   syncFavBtn();
   buildAlerts(c,fc.daily);
+  buildNowcast(fc);
   HOURLY=fc.hourly; LAST_FC=fc; drawChart(ACTIVE_TAB,fc);
   buildDays(fc.daily);
   buildAir(aq);
@@ -610,6 +646,16 @@ function buildAlerts(c,daily){
   const pr=daily.precipitation_probability_max?.[DAY0]??0;
   if([95,96,99].includes(c.weather_code))A.push(["danger","⛈️","Orage","Conditions orageuses en cours ou imminentes."]);
   else if(pr>=70)A.push(["info","🌧️","Pluie probable",`${pr}% de probabilité de précipitations aujourd'hui.`]);
+  // Risque d'orage via CAPE (énergie convective)
+  const cape=c.cape??0;
+  if(cape>=2500)A.push(["danger","⚡","Risque d'orage violent",`CAPE ${Math.round(cape)} J/kg — fort potentiel convectif (orages, grêle).`]);
+  else if(cape>=1000)A.push(["warn","⚡","Risque d'orage",`CAPE ${Math.round(cape)} J/kg — atmosphère instable, orages possibles.`]);
+  // Risque de brouillard : écart température / point de rosée faible + humidité élevée
+  const spread=(c.temperature_2m!=null&&c.dew_point_2m!=null)?(c.temperature_2m-c.dew_point_2m):null;
+  if(spread!=null&&spread<=1.5&&c.relative_humidity_2m>=95)
+    A.push(["info","🌫️","Brouillard probable",`Écart température/rosée de ${spread.toFixed(1)}° — visibilité possiblement réduite.`]);
+  else if(spread!=null&&spread<=2.5&&c.relative_humidity_2m>=90)
+    A.push(["info","🌫️","Risque de brume",`Air proche de la saturation (écart ${spread.toFixed(1)}°).`]);
 
   const el=$("alerts");
   if(!A.length){el.innerHTML='<div class="no-alert">✓ Aucune alerte — conditions calmes.</div>';return}
@@ -621,6 +667,44 @@ function buildAlerts(c,daily){
   });
 }
 
+/* ---- Nowcast pluie (minutely_15 sur ~3h) ---- */
+function buildNowcast(fc){
+  const el=$("nowcast");
+  const m=fc.minutely_15;
+  if(!m||!m.precipitation||!m.time){el.classList.remove("show");return;}
+  const off=fc.utc_offset_seconds||0;
+  const pad=n=>String(n).padStart(2,"0");
+  const w=new Date(Date.now()+off*1000);
+  // créneau de 15 min courant : heure locale + minute arrondie au quart d'heure inférieur
+  const key=`${w.getUTCFullYear()}-${pad(w.getUTCMonth()+1)}-${pad(w.getUTCDate())}T${pad(w.getUTCHours())}:${pad(Math.floor(w.getUTCMinutes()/15)*15)}`;
+  let start=m.time.findIndex(t=>t.startsWith(key));
+  if(start<0){ // repli : 1er créneau de l'heure courante
+    start=m.time.findIndex(t=>t.startsWith(key.slice(0,13)));
+  }
+  if(start<0)start=0;
+  const slice=m.precipitation.slice(start, start+12); // ~3h
+  if(!slice.length){el.classList.remove("show");return;}
+  const rainingNow=(slice[0]??0)>0.05;
+  if(rainingNow){
+    let stopAt=-1;
+    for(let i=1;i<slice.length;i++){ if((slice[i]??0)<=0.05){stopAt=i;break;} }
+    el.className="nowcast show rain";
+    el.innerHTML=stopAt>0
+      ? `🌧️ Pluie en cours — accalmie attendue dans <b>~${stopAt*15} min</b>.`
+      : `🌧️ Pluie en cours, qui devrait <b>persister</b> au moins 3h.`;
+  }else{
+    let startAt=-1;
+    for(let i=1;i<slice.length;i++){ if((slice[i]??0)>0.1){startAt=i;break;} }
+    if(startAt>0){
+      el.className="nowcast show rain";
+      el.innerHTML=`🌦️ Pluie attendue dans <b>~${startAt*15} min</b>.`;
+    }else{
+      el.className="nowcast show";
+      el.innerHTML=`☀️ Pas de pluie prévue dans les 3 prochaines heures.`;
+    }
+  }
+}
+
 /* ---- Hourly chart ---- */
 // Chaque onglet : titre, unité, type, et 1+ séries. Wind ajoute la direction au tooltip.
 const TAB_CFG={
@@ -629,7 +713,10 @@ const TAB_CFG={
     {label:"Ressenti",key:"apparent_temperature",cvar:"--cool",fill:false,dash:[5,4]}
   ]},
   precip:{unit:"%",type:"bar",series:[{label:"Probabilité",key:"precipitation_probability",cvar:"--cool",fill:true}]},
-  wind:{unit:"km/h",type:"line",dirKey:"wind_direction_10m",series:[{label:"Vent",key:"wind_speed_10m",cvar:"--good",fill:true}]},
+  wind:{unit:"km/h",type:"line",dirKey:"wind_direction_10m",series:[
+    {label:"Vent",key:"wind_speed_10m",cvar:"--good",fill:true},
+    {label:"Rafales",key:"wind_gusts_10m",cvar:"--accent",fill:false,dash:[5,4]}
+  ]},
   humidity:{unit:"%",type:"line",hasCondensation:true,series:[
     {label:"Humidité",key:"relative_humidity_2m",cvar:"--cool",fill:true},
     {label:"Point de rosée",key:"dew_point_2m",cvar:"--good",fill:false,dash:[5,4],altUnit:"°C"},
@@ -637,7 +724,9 @@ const TAB_CFG={
   ]},
   uv:{unit:"",type:"line",uvGradient:true,series:[{label:"Indice UV",key:"uv_index",cvar:"--accent",fill:true}]},
   visibility:{unit:"km",type:"line",series:[{label:"Visibilité",key:"visibility",cvar:"--good",fill:true,transform:v=>v/1000}]},
-  pressure:{unit:"hPa",type:"line",series:[{label:"Pression",key:"surface_pressure",cvar:"--cool",fill:true}]}
+  pressure:{unit:"hPa",type:"line",pressureTrend:true,series:[{label:"Pression",key:"surface_pressure",cvar:"--cool",fill:true}]},
+  solar:{unit:"W/m²",type:"line",solarInfo:true,series:[{label:"Rayonnement solaire",key:"shortwave_radiation",cvar:"--accent",fill:true}]},
+  freezing:{unit:"m",type:"line",freezeInfo:true,series:[{label:"Altitude de l'isotherme 0°C",key:"freezing_level_height",cvar:"--cool",fill:true}]}
 };
 // Niveaux UV (seuils OMS)
 const UV_LEVELS=[
@@ -667,6 +756,21 @@ function windDir(deg){
   if(deg==null)return"";
   const dirs=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"];
   return dirs[Math.round(deg/22.5)%16];
+}
+// Tendance barométrique : compare la pression maintenant (centre, slot 12) vs 3h avant
+function pressureTendency(h, slots){
+  const arr=h.surface_pressure; if(!arr)return null;
+  const center=slots[12], past=slots[9]; // 3h avant le centre
+  if(center==null||past==null||center<0||past<0||center>=arr.length||past>=arr.length)return null;
+  const pNow=arr[center], pPast=arr[past];
+  if(pNow==null||pPast==null)return null;
+  const d=pNow-pPast; // hPa sur 3h
+  const txt=`Variation ${d>=0?"+":""}${d.toFixed(1)} hPa sur 3h.`;
+  if(d<=-3)return{arrow:"↓↓",label:"Chute rapide",color:"#d64545",txt:txt+" Dégradation probable (vent, pluie)."};
+  if(d<=-1)return{arrow:"↓",label:"En baisse",color:"#ff8c42",txt:txt+" Temps qui se dégrade."};
+  if(d>=3)return{arrow:"↑↑",label:"Hausse rapide",color:"#3a9d6a",txt:txt+" Amélioration franche."};
+  if(d>=1)return{arrow:"↑",label:"En hausse",color:"#4cc66a",txt:txt+" Temps qui s'améliore."};
+  return{arrow:"→",label:"Stable",color:"#8a8a88",txt:txt+" Conditions stables."};
 }
 // ----- Plugin : point "maintenant" + ligne pointillée verticale -----
 const nowMarker={
@@ -810,7 +914,7 @@ function drawChart(tab,fc){
   const surf=cssVar("--surface")||"#fff";
   const ctx=$("chart").getContext("2d");
 
-  // Bandeau UV (niveau du moment affiché)
+  // Bandeau contextuel : UV (niveau) ou EMC (explication)
   const uvb=$("uvBanner");
   if(tab==="uv"){
     const vals=pick(h.uv_index,slots).map(v=>v??0);
@@ -819,6 +923,26 @@ function drawChart(tab,fc){
     uvb.innerHTML=`<span class="pill" style="background:${lv[1]}">${lv[2]}</span>`+
       `<span class="txt">Pic UV affiché : ${Math.round(mx)} (${lv[2].toLowerCase()})</span>`;
     uvb.classList.add("show");
+  }else if(tab==="solar"){
+    const vals=pick(h.shortwave_radiation,slots).filter(v=>v!=null);
+    const cur=vals.length?vals[Math.floor(vals.length/2)]:0;
+    // estimation PV : 1 kWc ≈ rendement ~0.8 × (GHI/1000) kW
+    const pv=(cur/1000*0.8);
+    uvb.innerHTML=`<span class="txt">Rayonnement solaire global (GHI). Estimation : une installation de 1 kWc produirait ≈ ${pv.toFixed(2)} kW à l'instant affiché (rendement ~80%).</span>`;
+    uvb.classList.add("show");
+  }else if(tab==="freezing"){
+    const vals=pick(h.freezing_level_height,slots).filter(v=>v!=null);
+    const cur=vals.length?Math.round(vals[Math.floor(vals.length/2)]):null;
+    uvb.innerHTML=`<span class="txt">Altitude de l'isotherme 0°C = limite pluie/neige approximative.`+
+      (cur!=null?` Actuellement ≈ ${cur} m.`:"")+` En dessous de cette altitude, les précipitations tombent en neige.</span>`;
+    uvb.classList.add("show");
+  }else if(tab==="pressure"){
+    const trend=pressureTendency(h, slots);
+    if(trend){
+      uvb.innerHTML=`<span class="pill" style="background:${trend.color}">${trend.arrow} ${trend.label}</span>`+
+        `<span class="txt">${trend.txt}</span>`;
+      uvb.classList.add("show");
+    }else{uvb.classList.remove("show");uvb.innerHTML="";}
   }else{uvb.classList.remove("show");uvb.innerHTML="";}
 
   const dirArr=cfg.dirKey ? pick(h[cfg.dirKey],slots) : null;
@@ -852,7 +976,7 @@ function drawChart(tab,fc){
     y:{grid:{color:gridC},
        ticks:{color:inkSoft,font:{family:"Inter",size:11},
          callback:v=>cfg.unit?`${Number.isInteger(v)?v:v.toFixed(1)} ${cfg.unit}`:`${v}`},
-       beginAtZero:tab!=="temp"&&tab!=="pressure"}
+       beginAtZero:tab!=="temp"&&tab!=="pressure"&&tab!=="freezing"}
   };
   if(hasSecondAxis){
     const a2=cfg.series.find(s=>s.altUnit);
@@ -1043,6 +1167,28 @@ function durHM(ms){
   const m=Math.round(ms/60000);
   return `${Math.floor(m/60)}h ${String(m%60).padStart(2,"0")}min`;
 }
+// Icône soleil + horizon + flèche (up=lever, down=coucher)
+function sunIcon(dir){
+  const gold=cssVar("--accent")||"#e8b400";
+  const ink=cssVar("--ink-soft")||"#888";
+  // rayons autour du demi-soleil
+  let rays="";
+  for(let a=-60;a<=60;a+=30){
+    const rad=a*Math.PI/180;
+    const x1=24+Math.sin(rad)*9, y1=20-Math.cos(rad)*9;
+    const x2=24+Math.sin(rad)*12.5, y2=20-Math.cos(rad)*12.5;
+    rays+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${gold}" stroke-width="1.6" stroke-linecap="round"/>`;
+  }
+  // flèche : up (lever) ou down (coucher)
+  const arrow = dir==="up"
+    ? `<path d="M40 22 L40 11 M36.5 14.5 L40 11 L43.5 14.5" fill="none" stroke="${ink}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`
+    : `<path d="M40 11 L40 22 M36.5 18.5 L40 22 L43.5 18.5" fill="none" stroke="${ink}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return `<svg viewBox="0 0 48 30">
+    ${rays}
+    <path d="M14 20 A10 10 0 0 1 34 20" fill="${gold}"/>
+    <line x1="3" y1="20" x2="45" y2="20" stroke="${ink}" stroke-width="1.8" stroke-linecap="round"/>
+    ${arrow}</svg>`;
+}
 function moonName(phase){
   if(phase<0.03||phase>0.97)return"Nouvelle lune";
   if(phase<0.22)return"Premier croissant";
@@ -1068,8 +1214,8 @@ function moonSVG(fraction, waxing, size){
     <radialGradient id="mg" cx="40%" cy="38%" r="65%">
       <stop offset="0%" stop-color="#f4f3ee"/><stop offset="100%" stop-color="#c5c8d0"/>
     </radialGradient></defs>
-    <circle r="${r}" fill="#23252c"/>
-    <path d="${lit}" fill="url(#mg)"/>
+    <circle r="${r}" fill="url(#mg)"/>
+    <path d="${lit}" fill="#23252c"/>
     <circle r="${r}" fill="none" stroke="rgba(0,0,0,.15)" stroke-width="1"/></svg>`;
 }
 function buildSunMoon(place, fc){
@@ -1079,19 +1225,21 @@ function buildSunMoon(place, fc){
   const t=SunCalc.getTimes(new Date(nowMs), lat, lon);
   const sunrise=t.sunrise, sunset=t.sunset, firstLight=t.dawn, lastLight=t.dusk;
 
+  // Header : lever + coucher avec icônes
+  $("sunriseBig").textContent=fmtLocal(sunrise, off);
   $("sunsetBig").textContent=fmtLocal(sunset, off);
+  $("sunriseIcon").innerHTML=sunIcon("up");
+  $("sunsetIcon").innerHTML=sunIcon("down");
   // Lumière restante avant le coucher
   const rem=sunset.getTime()-nowMs;
   $("daylightRemain").textContent = rem>0
     ? `Lumière du jour restante : ${durHM(rem)}`
-    : `Coucher passé · lever demain`;
+    : `Coucher passé · prochain lever demain`;
 
-  // Tableau des horaires
+  // Tableau des horaires secondaires (sans répéter lever/coucher déjà en en-tête)
   const total=sunset.getTime()-sunrise.getTime();
   $("sunTimes").innerHTML=[
     ["Première lueur",fmtLocal(firstLight,off)],
-    ["Lever",fmtLocal(sunrise,off)],
-    ["Coucher",fmtLocal(sunset,off)],
     ["Dernière lueur",fmtLocal(lastLight,off)],
     ["Durée du jour",durHM(total)]
   ].map(([l,v])=>`<div class="st"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
@@ -1175,13 +1323,15 @@ function renderMoonCalendar(){
   let hasFullMoon=false;
   for(let day=1;day<=daysInMonth;day++){
     const dt=new Date(year,month,day,12,0,0);
-    const ph=SunCalc.getMoonIllumination(dt).phase;
+    const ill=SunCalc.getMoonIllumination(dt);
+    const ph=ill.phase;
     const isFullMoon=(ph>=0.47&&ph<=0.53);
     if(isFullMoon)hasFullMoon=true;
     const todayCls=(isCurMonth&&today.getDate()===day)?" today":"";
     const fullCls=isFullMoon?" fullmoon":"";
-    html+=`<div class="mc${todayCls}${fullCls}" title="${isFullMoon?"🌕 Pleine lune":""}">`+
-      `<span class="d">${day}</span><span class="mi">${moonEmoji(ph)}</span></div>`;
+    const waxing=ph<=0.5;
+    html+=`<div class="mc${todayCls}${fullCls}" title="${isFullMoon?"Pleine lune":""}">`+
+      `<span class="d">${day}</span><span class="mi">${moonSVG(ill.fraction, waxing, 24)}</span></div>`;
   }
   $("moonCal").innerHTML=html;
   // Légende pleine lune si applicable
@@ -1464,6 +1614,59 @@ function buildMap(place){
   }
   setTimeout(()=>MAP.invalidateSize(),120);
 }
+
+/* ---------- Radar pluie animé (RainViewer, gratuit sans clé) ---------- */
+const RADAR={frames:[],layers:{},pos:0,timer:null,on:false,host:"",pastCount:0};
+function radarTileLayer(frame){
+  if(RADAR.layers[frame.path])return RADAR.layers[frame.path];
+  const url=RADAR.host+frame.path+"/256/{z}/{x}/{y}/2/1_1.png"; // color=2 (bleu), smooth=1, snow=1
+  const layer=L.tileLayer(url,{opacity:0,zIndex:6,tileSize:256});
+  RADAR.layers[frame.path]=layer;
+  if(MAP)layer.addTo(MAP);
+  return layer;
+}
+function showRadarFrame(i){
+  if(!RADAR.frames.length||!MAP)return;
+  RADAR.pos=((i%RADAR.frames.length)+RADAR.frames.length)%RADAR.frames.length;
+  // masquer toutes les couches sauf la courante
+  Object.values(RADAR.layers).forEach(l=>l.setOpacity(0));
+  const f=RADAR.frames[RADAR.pos];
+  radarTileLayer(f).setOpacity(0.65);
+  const d=new Date(f.time*1000);
+  const hhmm=d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  const future=RADAR.pos>=RADAR.pastCount;
+  $("radarTime").textContent=hhmm+(future?" · prévision":"");
+}
+async function toggleRadar(){
+  if(RADAR.on){stopRadar();return;}
+  const btn=$("radarToggle");
+  if(!RADAR.frames.length){
+    btn.textContent="◉ Chargement…";
+    const d=await fetch("https://api.rainviewer.com/public/weather-maps.json").then(r=>r.json()).catch(()=>null);
+    if(!d||!d.radar){btn.textContent="◉ Radar indisponible";setTimeout(()=>{btn.textContent="◉ Radar pluie";},2000);return;}
+    RADAR.host=d.host;
+    const past=d.radar.past||[], now=d.radar.nowcast||[];
+    RADAR.pastCount=past.length;
+    RADAR.frames=[...past,...now];
+    RADAR.pos=Math.max(0,past.length-1); // démarrer sur l'image la plus récente observée
+  }
+  if(!RADAR.frames.length){return;}
+  RADAR.on=true;
+  btn.classList.add("on"); btn.textContent="◉ Masquer radar";
+  $("radarTime").classList.add("show");
+  showRadarFrame(RADAR.pos);
+  if(RADAR.timer)clearInterval(RADAR.timer);
+  RADAR.timer=setInterval(()=>showRadarFrame(RADAR.pos+1),700);
+}
+function stopRadar(){
+  RADAR.on=false;
+  if(RADAR.timer){clearInterval(RADAR.timer);RADAR.timer=null;}
+  Object.values(RADAR.layers).forEach(l=>l.setOpacity(0));
+  const btn=$("radarToggle");
+  btn.classList.remove("on"); btn.textContent="◉ Radar pluie";
+  $("radarTime").classList.remove("show");
+}
+$("radarToggle").addEventListener("click",toggleRadar);
 
 /* ---------- Chevron (détails repliables) ---------- */
 $("chevron").addEventListener("click",()=>{
